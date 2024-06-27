@@ -1,0 +1,511 @@
+#Load Data
+
+import pandas as pd
+import re
+from sklearn.feature_extraction.text import CountVectorizer
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df1 = pd.read_csv('C:/Users/Pc/Desktop/Data_Science_Project_Oren/marketing_jobs_with_skills_and_summery_part1.csv')
+df2 = pd.read_csv('C:/Users/Pc/Desktop/Data_Science_Project_Oren/marketing_jobs_with_skills_and_summery_part2.csv')
+df3 = pd.read_csv('C:/Users/Pc/Desktop/Data_Science_Project_Oren/marketing_jobs_with_skills_and_summery_part3.csv')
+df4 = pd.read_csv('C:/Users/Pc/Desktop/Data_Science_Project_Oren/marketing_jobs_with_skills_and_summery_part4.csv')
+
+# Combine dataframes
+df = pd.concat([df1, df2, df3, df4], ignore_index=True)
+
+print(df)
+
+# Remove duplicates
+
+df.drop_duplicates(inplace=True)
+
+# Handle missing values
+df.dropna(subset=['job_title', 'skills'], inplace=True)
+
+# Standardize text
+df['job_title'] = df['job_title'].str.lower().str.strip()
+df['skills'] = df['skills'].str.lower().str.strip()
+
+output_file = 'merging_jobs.csv'
+df.to_csv(output_file, index=False)
+
+print(df)
+
+
+# Normalize Job Titles and Skills
+
+import re
+
+# Define normalization function
+def normalize_text(text, mapping):
+    for key, value in mapping.items():
+        text = re.sub(key, value, text)
+    return text
+
+# Create mappings for normalization
+job_title_mapping = {
+    r'\b(senior|sr)\b': 'senior',
+    r'\b(jr|junior)\b': 'junior',
+    # Add more mappings as needed
+}
+
+skill_mapping = {
+    r'\bml\b': 'machine learning',
+    r'\bai\b': 'artificial intelligence',
+    
+}
+
+
+# Apply normalization
+
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+
+df['job_title'] = df['job_title'].apply(lambda x: normalize_text(x, job_title_mapping))
+df['skills'] = df['skills'].apply(lambda x: normalize_text(x, skill_mapping))
+
+print(df)
+
+# Example data for demonstration
+data = {
+    'job_title': ['senior data scientist', 'junior data analyst', 'data engineer', 'senior machine learning engineer'],
+    'skills': ['python, ml, ai', 'excel, data analysis', 'python, sql', 'python, ml, ai, big data']
+}
+
+# Creating a DataFrame
+df = pd.DataFrame(data)
+
+# Ensure all skills are strings and handle missing values
+df['skills'] = df['skills'].fillna('').astype(str)
+
+# Feature extraction for job titles
+df['senior'] = df['job_title'].apply(lambda x: 1 if 'senior' in x else 0)
+df['junior'] = df['job_title'].apply(lambda x: 1 if 'junior' in x else 0)
+
+
+# Vectorize skills
+
+vectorizer = CountVectorizer()
+skills_matrix = vectorizer.fit_transform(df['skills'])
+
+# Create DataFrame from skills_matrix
+skills_df = pd.DataFrame(skills_matrix.toarray(), columns=vectorizer.get_feature_names_out())
+
+# Combine dataframes
+df = pd.concat([df, skills_df], axis=1)
+
+# Display the first few rows of the combined dataframe
+print(df.head())
+
+
+# Frequency of Job Titles
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+title_counts = df['job_title'].value_counts()
+print("Frequency of Job Titles:")
+print(title_counts.head(20))  
+
+df = pd.read_csv('merging_jobs.csv')
+
+
+# Extract the top 20 most common job titles and Plotting the countplot for job titles
+
+top_job_titles = df['job_title'].value_counts().index[:20]
+
+# Filter the dataframe to include only the top 20 job titles
+df_top_jobs = df[df['job_title'].isin(top_job_titles)]
+
+
+# Plotting the countplot for job titles
+plt.figure(figsize=(14, 8))
+sns.countplot(y='job_title', data=df_top_jobs, palette='viridis', order=top_job_titles)
+plt.title('Top 20 Most Common Job Titles')
+plt.xlabel('Number of Jobs')
+plt.ylabel('Job Title')
+plt.tight_layout()
+plt.show()
+
+
+# Primary Functions (based on job titles or skill analysis)
+
+# Example: Extracting primary functions from job titles
+def extract_primary_function(title):
+    # Example logic, adapt as per your data
+    if 'manager' in title.lower():
+        return 'Manager'
+    elif 'analyst' in title.lower():
+        return 'Analyst'
+    else:
+        return 'Other'
+
+df['primary_function'] = df['job_title'].apply(extract_primary_function)
+
+function_counts = df['primary_function'].value_counts()
+print("\nPrimary Functions:")
+print(function_counts)
+
+
+# distribution of seniority levels 
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the combined and cleaned data from CSV
+df = pd.read_csv('merging_jobs.csv')
+
+# Define seniority levels (adjust as per your dataset)
+seniority_levels = ['entry-level', 'junior', 'mid-level', 'senior', 'manager', 'director']
+
+# Count occurrences of each seniority level in job titles
+seniority_counts = {level: df['job_title'].str.contains(level, case=False, regex=True).sum() for level in seniority_levels}
+
+# Plotting the distribution with hue assigned to x variable
+plt.figure(figsize=(10, 6))
+sns.barplot(x=list(seniority_counts.keys()), y=list(seniority_counts.values()), hue=list(seniority_counts.keys()), palette='viridis', dodge=False)
+plt.title('Distribution of Seniority Levels in Marketing Job Titles')
+plt.xlabel('Seniority Level')
+plt.ylabel('Number of Job Titles')
+plt.xticks(rotation=45)
+plt.legend([], frameon=False)  # Disable the legend
+plt.tight_layout()
+plt.show()
+
+# Print the counts for each seniority level
+print("\nSeniority Level Distribution:")
+for level, count in seniority_counts.items():
+    print(f"{level}: {count}")
+
+
+
+# Identify the primary functions associated with marketing manager roles.
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the combined and cleaned data from CSV
+df = pd.read_csv('merging_jobs.csv')
+
+# Define keywords for primary functions (adjust as needed)
+primary_functions = [
+    'digital marketing', 'seo', 'content marketing', 'social media', 'product marketing',
+    'brand management', 'email marketing', 'analytics', 'public relations', 'market research',
+    'advertising', 'sales', 'business development', 'event marketing'
+]
+
+# Initialize a dictionary to hold counts of primary functions
+function_counts = {function: 0 for function in primary_functions}
+
+# Count occurrences of each primary function in job summaries
+for function in primary_functions:
+    count = df['summary'].str.contains(function, case=False, regex=True).sum()
+    function_counts[function] = count
+
+# Sort function counts by frequency
+sorted_function_counts = dict(sorted(function_counts.items(), key=lambda item: item[1], reverse=True))
+
+# Prepare data for plotting
+function_names = list(sorted_function_counts.keys())
+function_values = list(sorted_function_counts.values())
+
+# Plotting the distribution with hue assigned to x variable
+plt.figure(figsize=(14, 8))
+sns.barplot(x=function_names, y=function_values, hue=function_names, palette='viridis', dodge=False)
+plt.title('Distribution of Primary Functions in Marketing Manager Roles')
+plt.xlabel('Primary Function')
+plt.ylabel('Number of Job Titles')
+plt.xticks(rotation=45)
+plt.legend([], frameon=False)  # Disable the legend
+plt.tight_layout()
+plt.show()
+
+# Print the counts for each primary function
+print("\nPrimary Function Distribution:")
+for function, count in sorted_function_counts.items():
+    print(f"{function}: {count}")
+
+
+
+# Employment Type Distribution: Assess the distribution of full-time vs. part-time roles.
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load data
+df1 = pd.read_csv('C:/Users/Pc/Desktop/Data_Science_Project_Oren/marketing_jobs_with_skills_and_summery_part1.csv')
+df2 = pd.read_csv('C:/Users/Pc/Desktop/Data_Science_Project_Oren/marketing_jobs_with_skills_and_summery_part2.csv')
+df3 = pd.read_csv('C:/Users/Pc/Desktop/Data_Science_Project_Oren/marketing_jobs_with_skills_and_summery_part3.csv')
+df4 = pd.read_csv('C:/Users/Pc/Desktop/Data_Science_Project_Oren/marketing_jobs_with_skills_and_summery_part4.csv')
+
+# Combine dataframes
+df = pd.concat([df1, df2, df3, df4], ignore_index=True)
+
+# Data cleaning
+## Remove duplicates
+df.drop_duplicates(inplace=True)
+
+## Handle missing values
+df.dropna(subset=['job_title', 'skills'], inplace=True)
+
+## Normalize text
+df['job_title'] = df['job_title'].str.lower().str.strip()
+df['skills'] = df['skills'].str.lower().str.strip()
+
+# Save the combined and cleaned dataframe to a new CSV file
+output_file = 'combined_marketing_jobs.csv'
+df.to_csv(output_file, index=False)
+
+print(f"Combined and cleaned data saved to '{output_file}'.")
+
+# Employment Type Distribution
+## Define keywords for employment types
+employment_types = {
+    'full-time': ['full-time', 'full time', 'fulltime'],
+    'part-time': ['part-time', 'part time', 'parttime']
+}
+
+## Initialize a dictionary to hold counts of employment types
+employment_counts = {'full-time': 0, 'part-time': 0}
+
+## Count occurrences of each employment type in job titles
+for employment_type, keywords in employment_types.items():
+    count = df['summary'].str.contains('|'.join(keywords), case=False, regex=True).sum()
+    employment_counts[employment_type] += count
+
+# Plotting the distribution
+plt.figure(figsize=(8, 6))
+sns.barplot(x=list(employment_counts.keys()), y=list(employment_counts.values()), hue=list(employment_counts.keys()), palette='viridis', dodge=False)
+plt.title('Distribution of Full-Time vs. Part-Time Roles in Marketing Job Titles')
+plt.xlabel('Employment Type')
+plt.ylabel('Number of Job Titles')
+plt.legend([], frameon=False)  # Disable the legend
+plt.tight_layout()
+plt.show()
+
+# Print the counts for each employment type
+print("\nEmployment Type Distribution:")
+for employment_type, count in employment_counts.items():
+    print(f"{employment_type}: {count}")
+
+
+
+# Common Skills and Requirements: Perform text analysis to find common skills and qualifications listed.
+
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the combined and cleaned data from CSV
+df = pd.read_csv('combined_marketing_jobs.csv')
+
+# Ensure all skills are strings and handle missing values
+df['skills'] = df['skills'].fillna('').astype(str)
+
+# Standardize text
+df['skills'] = df['skills'].str.lower().str.strip()
+
+# Vectorize skills
+vectorizer = CountVectorizer()
+skills_matrix = vectorizer.fit_transform(df['skills'])
+
+# Sum the counts of each skill directly from the sparse matrix
+skill_counts = skills_matrix.sum(axis=0)
+skill_counts = skill_counts.A1  # Convert to a 1D array
+
+# Get the skill names
+skill_names = vectorizer.get_feature_names_out()
+
+# Create a DataFrame for the skill counts
+skills_df = pd.DataFrame({'skill': skill_names, 'count': skill_counts})
+
+# Sort the DataFrame by count in descending order
+skills_df = skills_df.sort_values(by='count', ascending=False)
+
+# Display the most common skills
+print("\nCommon Skills and Requirements:")
+print(skills_df.head(20))
+
+# Plot the most common skills
+plt.figure(figsize=(14, 8))
+sns.barplot(x=skills_df.head(20)['skill'], y=skills_df.head(20)['count'], hue=skills_df.head(20)['skill'], dodge=False, palette='viridis')
+plt.title('Top 20 Common Skills and Requirements in Marketing Jobs')
+plt.xlabel('Skills')
+plt.ylabel('Frequency')
+plt.xticks(rotation=45)
+plt.legend([], frameon=False)  # Disable the legend
+plt.tight_layout()
+plt.show()
+
+
+# Keyword Analysis: Identify frequently used keywords and phrases.
+
+
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the combined and cleaned data from CSV
+df = pd.read_csv('combined_marketing_jobs.csv')
+
+# Ensure all summaries are strings and handle missing values
+df['summary'] = df['summary'].fillna('').astype(str)
+
+# Standardize text
+df['summary'] = df['summary'].str.lower().str.strip()
+
+# Vectorize summaries
+vectorizer = CountVectorizer(stop_words='english')
+summary_matrix = vectorizer.fit_transform(df['summary'])
+
+# Sum the counts of each word
+word_counts = summary_matrix.sum(axis=0)
+word_counts = word_counts.A1  # Convert to a 1D array
+
+# Get the word names
+word_names = vectorizer.get_feature_names_out()
+
+# Create a DataFrame for the word counts
+words_df = pd.DataFrame({'word': word_names, 'count': word_counts})
+
+# Sort the DataFrame by count in descending order
+words_df = words_df.sort_values(by='count', ascending=False)
+
+# Display the most common words
+print("\nCommon Keywords and Phrases:")
+print(words_df.head(20))
+
+# Plot the most common words
+plt.figure(figsize=(14, 8))
+sns.barplot(x=words_df.head(20)['word'], y=words_df.head(20)['count'], palette='viridis')
+plt.title('Top 20 Common Keywords and Phrases in Job Summaries')
+plt.xlabel('Keywords')
+plt.ylabel('Frequency')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+# Job Title Recommendation System 
+
+
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Load the CSV file into a DataFrame
+df = pd.read_csv('merging_jobs.csv')
+
+def recommend_job_title(input_title, df, top_n=5):
+    # Prepare the data
+    all_titles = df['job_title'].tolist()
+    all_titles.append(input_title)
+    
+    # Create TF-IDF vectors
+    tfidf = TfidfVectorizer()
+    title_vectors = tfidf.fit_transform(all_titles)
+    
+    # Calculate cosine similarity
+    cosine_similarities = cosine_similarity(title_vectors[-1], title_vectors[:-1]).flatten()
+    
+    # Get top N similar job titles
+    similar_indices = cosine_similarities.argsort()[:-top_n-1:-1]
+    similar_titles = [(all_titles[i], cosine_similarities[i]) for i in similar_indices]
+    
+    # Create a DataFrame for recommendations
+    recommendations_df = pd.DataFrame(similar_titles, columns=['Job Title', 'Similarity'])
+    
+    return recommendations_df
+
+# Example usage. Change title for your needs.
+input_title = "data"
+recommendations_df = recommend_job_title(input_title, df)
+print(f"Recommended job titles for '{input_title}':")
+print(recommendations_df.to_string(index=False))
+
+
+
+# Skills Matching and Recommendation:
+
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Assuming df is your DataFrame loaded from 'merging_jobs.csv'
+
+def recommend_skills(input_skills, df, top_n=5):
+    # Prepare the data
+    all_skills = df['skills'].tolist()
+    all_skills.append(input_skills)
+    
+    # Create bag-of-words vectors
+    vectorizer = CountVectorizer()
+    skill_vectors = vectorizer.fit_transform(all_skills)
+    
+    # Calculate cosine similarity
+    cosine_similarities = cosine_similarity(skill_vectors[-1], skill_vectors[:-1]).flatten()
+    
+    # Get top N similar skill sets
+    similar_indices = cosine_similarities.argsort()[:-top_n-1:-1]
+    similar_skills = [(all_skills[i], cosine_similarities[i]) for i in similar_indices]
+    
+    # Create a DataFrame for recommendations
+    recommendations_df = pd.DataFrame(similar_skills, columns=['Skills', 'Similarity'])
+    
+    return recommendations_df
+
+# Example usage. Change skills for your needs.
+input_skills = "python, data analysis, machine learning"
+recommendations_df = recommend_skills(input_skills, df)
+# Print recommendations in a left-aligned vertical format
+print(f"Recommended additional skills for '{input_skills}':")
+for index, row in recommendations_df.iterrows():
+    print(f"{row['Skills']} (Similarity: {row['Similarity']:.2f})")
+
+
+
+# Candidate Resume Analyzer and Job Matcher
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def analyze_resume_and_match_jobs(resume_text, df, top_n=5):
+    # Combine job titles and skills
+    job_descriptions = df['job_title'] + ' ' + df['skills']
+    
+    # Add resume text to the corpus
+    all_texts = job_descriptions.tolist()
+    all_texts.append(resume_text)
+    
+    # Create TF-IDF vectors
+    tfidf = TfidfVectorizer()
+    vectors = tfidf.fit_transform(all_texts)
+    
+    # Calculate cosine similarity
+    cosine_similarities = cosine_similarity(vectors[-1], vectors[:-1]).flatten()
+    
+    # Get top N matching jobs
+    matching_indices = cosine_similarities.argsort()[:-top_n-1:-1]
+    matching_jobs = [(df.iloc[i]['job_title'], df.iloc[i]['skills'], cosine_similarities[i]) for i in matching_indices]
+    
+    return matching_jobs
+
+# Example usage. Change the text based on your needs.
+resume_text = "Experienced data scientist with expertise in Python, machine learning, and statistical analysis."
+matches = analyze_resume_and_match_jobs(resume_text, df)
+print("Top matching jobs for the resume:")
+for job_title, skills, similarity in matches:
+    print(f"Job Title: {job_title}")
+    print(f"Required Skills: {skills}")
+    print(f"Match Score: {similarity:.2f}")
+    print()
+
+
+
+
+
